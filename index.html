@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<title>Chat Away!</title>
+	<link rel="stylesheet" type="text/css" href="/style/base.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+  	<script>
+       $(function () {
+           var socket = io();
+           $nameForm = $('#setName');
+           $nameError = $('#nameError');
+           $nameBox = $('#name');
+           $online = $('#online');
+
+           $nameForm.submit(function (e) {
+               e.preventDefault();
+               console.log('form 1');
+               socket.emit('new user', $nameBox.val(), function (data) {
+                   if (data) {
+                       $('#nameWrap').hide();
+                       $('#chatWrap').show();
+                   } else {
+                       $nameError.html('That username is taken. Try again with another Username')
+                   }
+               });
+               $nameBox.val('');
+           });
+
+           $form = $('#takeInput');
+           $messageBox = $('#text');
+           $log = $('#connectionLog');
+           socket.on('newclientconnect', function (data) {
+               $log.html(data.description + "<br/>");
+           });
+
+           socket.on('usernames', function (data) {
+               var users = '';
+               for (i = 0; i < data.length; i++) {
+                   users += data[i] + '<br/>';
+               }
+               $online.html(users);
+
+           });
+
+
+           $form.submit(function (e) {
+               e.preventDefault();
+               console.log('form 2');
+               socket.emit('chat message', $messageBox.val());
+               $messageBox.val('');
+               return false;
+           });
+
+           socket.on('new message', function(msg){
+               $('#messages').append($('<li>').text(msg.name + ':' + msg.message));
+           });
+       });
+	</script>
+  </head>
+
+  <body>
+    <div class="container" id="nameWrap">
+        <p>Enter a username!</p>
+        <p id="nameError"></p>
+        <form id="setName" action="">
+            <input id="name" autocomplete="off" /><button>Save</button>
+        </form>
+    </div>
+    <div class="container-fluid" id="chatWrap">
+        <div class="row">
+            <div class="col-md-10" id="messageWrap">
+                <ul id="messages"></ul>
+                <form id="takeInput" action="">
+                    <input id="text" autocomplete="off" /><button>Send</button>
+                </form>
+            </div>
+            <div class="col-md-2">
+                <h1>Notifications</h1>
+                <div id ="connectionLog">
+                    
+                </div>
+                <div id="online">
+
+                </div>
+            </div>
+        </div>
+            
+    </div>
+    
+  </body>
+</html>
